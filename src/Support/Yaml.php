@@ -3,7 +3,16 @@
 namespace PragmaRX\Health\Support;
 
 use Symfony\Component\Yaml\Yaml as SymfonyYaml;
+use Illuminate\Support\Str;
 
+
+/**
+ * Class Yaml
+ *
+ * @uses Str::random()
+ *
+ * @package PragmaRX\Health\Support
+ */
 class Yaml
 {
     /**
