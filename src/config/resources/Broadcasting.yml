@@ -3,7 +3,7 @@ abbreviation: brdc
 channel: pragmarx-health-broadcasting-channel
 checker: PragmaRX\Health\Checkers\BroadcastingChecker
 route_name: pragmarx.health.broadcasting.callback
-secret: {{ str_random(32) }}
+secret: {{ Str::random(32) }}
 timeout: 30
 routes:
     pragmarx.health.broadcasting.callback:

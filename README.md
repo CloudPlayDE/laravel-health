@@ -62,7 +62,7 @@ Creating new resources monitors is easy, just create a new YAML file in app's co
     notify: true
     driver: s3
     file: pragmarx-health-s3-testfile.txt
-    contents: {{ str_random(32) }}
+    contents: {{ Str::random(32) }}
     error_message: 'Amazon S3 connection is failing.'
     column_size: 4
 
