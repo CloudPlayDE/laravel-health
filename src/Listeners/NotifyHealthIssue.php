@@ -2,7 +2,7 @@
 
 namespace PragmaRX\Health\Listeners;
 
-use Notification;
+use Illuminate\Support\Facades\Notification;
 use PragmaRX\Health\Events\RaiseHealthIssue;
 use PragmaRX\Health\Notifications\HealthStatus;
 
@@ -13,13 +13,17 @@ class NotifyHealthIssue
      */
     private function getNotifiableUsers()
     {
-        return collect(config('health.notifications.users.emails'))->map(function ($item) {
-            $model = instantiate(config('health.notifications.users.model'));
+        return collect(config('health.notifications.users.emails'))->map(
+            function ($item) {
+                $model = instantiate(
+                    config('health.notifications.users.model')
+                );
 
-            $model->email = $item;
+                $model->email = $item;
 
-            return $model;
-        });
+                return $model;
+            }
+        );
     }
 
     /**
@@ -31,14 +35,18 @@ class NotifyHealthIssue
     public function handle(RaiseHealthIssue $event)
     {
         try {
-            Notification::send(
-                $this->getNotifiableUsers(),
-                new HealthStatus($event->failure, $event->channel)
-            );
+            $event->failure->targets->each(function ($target) use ($event) {
+                if (! $target->result->healthy) {
+                    Notification::send(
+                        $this->getNotifiableUsers(),
+                        new HealthStatus($target, $event->channel)
+                    );
+                }
+            });
         } catch (\Exception $exception) {
-            // do nothing
-        } catch (\ErrorException $exception) {
-            // do nothing
+            report($exception);
+        } catch (\Throwable $error) {
+            report($error);
         }
     }
 }

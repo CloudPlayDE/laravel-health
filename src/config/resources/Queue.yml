@@ -1,9 +1,10 @@
 abbreviation: queue
-name: health-queue
-cache_instance: cache
-test_job: PragmaRX\Health\Support\Jobs\TestJob
-checker: PragmaRX\Health\Checkers\QueueChecker
-notify: true
-connection: ''
-error_message: 'Queue system is not working properly.'
-column_size: 4
+checker: PragmaRX\Health\Checkers\Queue
+error_message: "Queue system is not working properly."
+column_size: 3
+targets:
+  - default:
+      test_job: PragmaRX\Health\Support\Jobs\TestJob
+      cache_instance: cache
+      notify: true
+      connection: ""

@@ -16,39 +16,54 @@ This package checks if the application resources are running as they should and 
 - View app error messages right in the panel.
 - Http response codes 200 and 500, on error, for services like [Envoyer](https://envoyer.io) to keep track of your app health.
 
-## Built-in Checkers 
+## Built-in Resources 
 
 Heath has pre-configured resource checkers for the following services:
 
-- Broadcasting    
-- Cache           
-- Database        
-- DocuSign        
-- Filesystem      
-- Framework       
-- Health          
-- Http            
-- Https           
-- LaravelServices 
-- LocalStorage    
-- Mail            
-- MySql           
-- NewrelicDeamon  
-- NginxServer     
-- Php             
+- AppKey
+- Broadcasting
+- Cache
+- ConfigurationCached
+- Database
+- DebugMode
+- DirectoryPermissions
+- DiskSpace
+- ElasticsearchConnectable
+- EnvExists
+- Filesystem
+- Framework
+- Horizon
+- Http
+- Https
+- LaravelServices
+- Latency
+- LocalStorage
+- Mail
+- MailgunConnectable
+- MemcachedConnectable
+- MigrationsUpToDate
+- MySql
+- MySqlConnectable
+- NewrelicDeamon
+- NginxServer
+- PackagesUpToDate
+- Php
+- PostgreSqlConnectable
 - PostgreSqlServer
-- Queue           
-- QueueWorkers    
-- RebootRequired  
-- Redis           
-- RedisServer     
-- S3              
-- ServerLoad      
-- ServerUptime    
-- Sshd            
-- Supervisor      
+- Queue
+- QueueWorkers
+- RebootRequired
+- Redis
+- RedisConnectable
+- RedisServer
+- RoutesCached
+- S3
+- ServerLoad
+- ServerUptime
+- Sshd
+- Supervisor
  
-But you can add anything else you need!
+But you can add anything else you need, you just have to find the right checker to use or just create a new checker for your resource. 
 
 ## Easy Configuration 
 
@@ -90,7 +105,7 @@ Creating new resources monitors is easy, just create a new YAML file in app's co
 
 ### Panel
 
-![default panel](docs/images/error-multi.png)
+![default panel](docs/images/panel.png)
 
 ### Panel alternate design
 
@@ -132,7 +147,7 @@ Use the command `health:check` to check all your resources and send notification
 
 ## Routes
 
-After installing you will have access to the folowing routes:
+After installing you will have access to the following routes:
 
 ### /health/panel
 
@@ -160,8 +175,8 @@ Returns a json with information about a particular service:
 
 ## Requirements
 
-- PHP 5.6+
-- Laravel 5.3+
+- PHP 7.1+
+- Laravel 5.6+
 
 ## Installing
 
@@ -171,13 +186,13 @@ Use Composer to install it:
 
 ## Installing on Laravel
 
-Add the Service Provider to your `app/config/app.php` (Laravel 4.x) or `config/app.php` (Laravel 5.x):
+Add the Service Provider to your `config/app.php`:
 
     PragmaRX\Health\ServiceProvider::class,
 
 ## Publish config and views
 
-    php artisan vendor:publish
+    php artisan vendor:publish --provider="PragmaRX\Health\ServiceProvider"
 
 ## Hit The Health Panel
 
@@ -185,17 +200,32 @@ Add the Service Provider to your `app/config/app.php` (Laravel 4.x) or `config/a
     
 ## Configure All The Things
 
-- Panel
+Almost everything is easily configurable in this package:
+ 
+- Panel name
 - Title and messages
 - Resource checkers
 - Slack icon
-- Sort resources in the panel
 - Notification channels
 - Template location
 - Routes and prefixes
 - Mail server
 - Cache
 - Scheduler
+
+## Configure binaries
+
+Some of the checkers need you to configure the proper binary path for the checker to work:
+
+    'services' => [
+        'ping' => [
+            'bin' => env('HEALTH_PING_BIN', '/sbin/ping'),
+        ],
+
+        'composer' => [
+            'bin' => env('HEALTH_COMPOSER_BIN', 'composer'),
+        ],
+    ],
 
 ## Allowing Slack Notifications
 
@@ -213,7 +243,7 @@ To receive notifications via Slack, you'll have to setup [Incoming Webhooks](htt
 
 ## Cache
 
-When Health result is cached, you can flush the chage to make it process all resources again by adding `?flush=true` to the url: 
+When Health result is cached, you can flush the cache to make it process all resources again by adding `?flush=true` to the url: 
 
     http://yourdomain.com/health/panel?flush=true
 
@@ -276,6 +306,49 @@ Broadcasting checker is done via ping and pong system. The broadcast checker wil
         </body>
     </html>
 
+## Programatically checking resources
+
+``` php
+$generalHealthState = app('pragmarx.health')->checkResources();
+
+// or 
+
+$databaseHealthy = app('pragmarx.health')->checkResource('database')->isHealthy();
+```
+
+Checking in artisan commands example: 
+
+```
+Artisan::command('database:health', function () {
+    app('pragmarx.health')->checkResource('database')->isHealthy()
+        ? $this->info('database is healthy')
+        : $this->info('database is in trouble')
+    ;
+})->describe('Check database health');
+```
+
+## Lumen
+To use it on Lumen, you'll probably need to do something like this on your `bootstrap/app.php`:
+
+    $app->instance('path.config', app()->basePath() . DIRECTORY_SEPARATOR . 'config');
+    $app->instance('path.storage', app()->basePath() . DIRECTORY_SEPARATOR . 'storage');
+    
+    $app->withFacades();
+    
+    $app->singleton('Illuminate\Contracts\Routing\ResponseFactory', function ($app) {
+        return new \Illuminate\Routing\ResponseFactory(
+            $app['Illuminate\Contracts\View\Factory'],
+            $app['Illuminate\Routing\Redirector']
+        );
+    });
+    
+    $app->register(PragmaRX\Health\ServiceProvider::class);
+ 
+## Testing
+
+``` bash
+$ composer test
+```
 
 ## Author
 

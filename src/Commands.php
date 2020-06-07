@@ -2,9 +2,8 @@
 
 namespace PragmaRX\Health;
 
-use Illuminate\Console\Command;
 use Illuminate\Support\Str;
-use PragmaRX\Health\Support\Yaml;
+use Illuminate\Console\Command;
 use PragmaRX\Health\Service as HealthService;
 
 class Commands
@@ -24,6 +23,24 @@ class Commands
         $this->healthService = $healthService;
     }
 
+    /**
+     * @param $rows
+     * @return \Illuminate\Support\Collection|\IlluminateAgnostic\Arr\Support\Collection|\IlluminateAgnostic\Collection\Support\Collection|\IlluminateAgnostic\Str\Support\Collection|\Tightenco\Collect\Support\Collection|\Vanilla\Support\Collection
+     * @throws \Exception
+     */
+    protected function getTargetsFomResources($resources)
+    {
+        $targets = collect();
+
+        foreach ($resources as $resource) {
+            foreach ($resource->targets as $target) {
+                $targets->push($target);
+            }
+        }
+
+        return $targets;
+    }
+
     private function normalizeMessage($message)
     {
         $message = str_replace("\n", '', $message);
@@ -41,15 +58,17 @@ class Commands
     {
         $columns = ['Resource', 'State', 'Message'];
 
-        $rows = $this->healthService->health()->map(function ($resource) {
-            return [
-                $resource['name'],
-                $resource['health']['healthy']
-                    ? '<info>healthy</info>'
-                    : '<fg=red>failing</fg=red>',
-                $this->normalizeMessage($resource['health']['message']),
-            ];
-        })->toArray();
+        $rows = $this->getTargetsFomResources($this->healthService->health())
+            ->map(function ($target) {
+                return [
+                    "{$target->resource->name} ({$target->display})",
+                    $target->result->healthy
+                        ? '<info>healthy</info>'
+                        : '<fg=red>failing</fg=red>',
+                    $this->normalizeMessage($target->result->errorMessage),
+                ];
+            })
+            ->toArray();
 
         $this->table($command, $columns, $rows);
     }
@@ -58,63 +77,24 @@ class Commands
     {
         $checker = $this->healthService->getSilentChecker();
 
-        $errors = $checker()->where('is_global', false)->reduce(function ($carry, $item) {
-            return $carry + ($item['health']['healthy'] ? 0 : 1);
+        $errors = $this->getTargetsFomResources($checker()->filter(function ($resource) {
+            return ! $resource->isGlobal;
+        }))->reduce(function ($carry, $target) {
+            return $carry + ($target->result->healthy ? 0 : 1);
         }, 0);
 
         if ($errors) {
             $this->error(
                 $command,
                 "Application needs attention, $errors ".
-                str_plural('resouce', $errors).' '.
-                ($errors > 1 ? 'are' : 'is').
-                ' currently failing.'
+                    Str::plural('resouce', $errors).
+                    ' '.
+                    ($errors > 1 ? 'are' : 'is').
+                    ' currently failing.'
             );
+        } else {
+            $this->info($command, 'Check completed with no errors.');
         }
-
-        $this->info($command, 'Check completed with no errors.');
-    }
-
-    public function export(Command $command = null)
-    {
-        $yaml = new Yaml();
-
-        collect(config('health.resources'))->each(function ($resource, $key) use ($command, $yaml) {
-            $path = config('health.resources_location.path');
-
-            $resource['column_size'] = (int) $resource['columnSize'];
-
-            unset($resource['columnSize']);
-
-            if (! file_exists($path)) {
-                mkdir($path, 0660, true);
-            }
-
-            $dump = $yaml->dump($resource, 5);
-
-            file_put_contents($file = $path.DIRECTORY_SEPARATOR.Str::studly($key).'.yml', $dump);
-
-            $this->info($command, 'Exported '.$file);
-        });
-    }
-
-    public function publish(Command $command = null)
-    {
-        $yaml = new Yaml();
-
-        $yaml->loadYamlFromDir(package_resources_dir(), false)->each(function ($value, $key) use ($command) {
-            if (! file_exists($path = config('health.resources_location.path'))) {
-                mkdir($path, 0755, true);
-            }
-
-            if (file_exists($file = $path.DIRECTORY_SEPARATOR.$key)) {
-                return $this->warn($command, 'Skipped: '.$file);
-            }
-
-            file_put_contents($file, $value);
-
-            $this->info($command, 'Saved: '.$file);
-        });
     }
 
     /**
