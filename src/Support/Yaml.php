@@ -24,7 +24,7 @@ class Yaml
      */
     public function loadYamlFromDir($directory, $parseYaml = true)
     {
-        if (! file_exists($directory)) {
+        if (!is_dir($directory) && ! file_exists($directory)) {
             return collect([]);
         }
 
