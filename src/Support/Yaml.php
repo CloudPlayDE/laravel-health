@@ -59,9 +59,7 @@ class Yaml
         preg_match_all('/{{(.*)}}/', $contents, $matches);
 
         foreach ($matches[0] as $key => $match) {
-            if (is_countable($match) && count($match)) {
-                $contents = str_replace($matches[0][$key], $this->resolveVariable($matches[1][$key]), $contents);
-            }
+            $contents = str_replace($matches[0][$key], $this->resolveVariable($matches[1][$key]), $contents);
         }
 
         return $contents;
@@ -94,7 +92,7 @@ class Yaml
     {
         preg_match_all('/(.*)\((.*)\)/', $string, $matches);
 
-        if (is_countable($matches) && count($matches) && is_countable($matches[0]) && count($matches[0])) {
+        if (is_countable($matches) && count($matches) > 0 && $matches[0]) {
             $function = $matches[1][0];
 
             return $function($this->removeQuotes($matches[2][0]));
