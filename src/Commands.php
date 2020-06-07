@@ -3,6 +3,7 @@
 namespace PragmaRX\Health;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Str;
 use PragmaRX\Health\Support\Yaml;
 use PragmaRX\Health\Service as HealthService;
 
@@ -91,7 +92,7 @@ class Commands
 
             $dump = $yaml->dump($resource, 5);
 
-            file_put_contents($file = $path.DIRECTORY_SEPARATOR.studly_case($key).'.yml', $dump);
+            file_put_contents($file = $path.DIRECTORY_SEPARATOR.Str::studly($key).'.yml', $dump);
 
             $this->info($command, 'Exported '.$file);
         });

@@ -35,7 +35,7 @@ abstract class BaseChannel implements Contract
 
         return sprintf(
             $this->getActionMessage($item),
-            studly_case($item['name']),
+            \Illuminate\Support\Str::studly($item['name']),
             $domain ? " in {$domain}." : '.'
         );
     }

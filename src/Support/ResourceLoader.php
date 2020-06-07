@@ -149,7 +149,7 @@ class ResourceLoader
     private function loadArray()
     {
         return collect(config('health.resources'))->mapWithKeys(function ($value, $key) {
-            return [studly_case($key) => $value];
+            return [\Illuminate\Support\Str::studly($key) => $value];
         });
     }
 
