@@ -95,7 +95,7 @@ class ServiceTest extends TestCase
         $this->app['config']->set('health.resources_location.path', package_resources_dir());
     }
 
-    public function setUp()
+    public function setUp() : void
     {
         parent::setUp();
 

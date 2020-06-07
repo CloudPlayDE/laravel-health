@@ -174,7 +174,7 @@ return [
             'channel' => 'pragmarx-health-broadcasting-channel',
             'checker' => PragmaRX\Health\Checkers\BroadcastingChecker::class,
             'route_name' => $routeName = 'pragmarx.health.broadcasting.callback',
-            'secret' => str_random(),
+            'secret' => 'random_string',
             'timeout' => 30,
             'routes' => [
                 $routeName => [
