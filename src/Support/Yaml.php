@@ -20,10 +20,16 @@ class Yaml
         }
 
         return collect(scandir($directory) ?: [])->reject(function ($item) {
-            return is_dir($item) || ! ends_with($item, '.yml');
+            return is_dir($item) || ! Yaml::ends_with($item, '.yml');
         })->mapWithKeys(function ($file) use ($directory, $parseYaml) {
             return [$file => $this->loadFile($directory, $file, $parseYaml)];
         });
+    }
+
+    public static function ends_with($haystack, $needle) {
+        // search forward starting from end minus needle length characters
+        return $needle === "" || (($temp = strlen($haystack) - strlen($needle)) >= 0 && strpos($haystack, $needle, $temp) !== false);
+
     }
 
     /**
